@@ -292,10 +292,23 @@ func decodeBigInt(s *Stream, val reflect.Value) error {
 		i = new(big.Int)
 		val.Set(reflect.ValueOf(i))
 	}
-	// Reject leading zero bytes
-	if len(b) > 0 && b[0] == 0 {
+	// Reject leading zero bytes - but a single 0 byte is treated as a 0 for
+	// aeternity compatibility
+	if len(b) > 1 && b[0] == 0 && b[1] == 0 {
 		return wrapStreamError(ErrCanonInt, val.Type())
 	}
+	// aeternity change: bytearray(0) aka [0x00] means int = 0.
+	// Original code path for big.Int(0):
+	// b will be [] because Stream.Bytes() treats [0x80] like an empty
+	// String
+	// therefore Int.SetBytes() will be called with b = [], and thus remains at 0.
+	// Int.SetBytes([0x00]) is NOT the same thing, even though the end effect is the same.
+	// Hence this extra if clause here to treat b = [0x00] as if b = []
+	if len(b) == 1 && b[0] == 0 {
+		i.SetBytes([]byte{})
+		return nil
+	}
+
 	i.SetBytes(b)
 	return nil
 }
