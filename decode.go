@@ -734,9 +734,9 @@ func (s *Stream) uint(maxbits int) (uint64, error) {
 	}
 	switch kind {
 	case Byte:
-		if s.byteval == 0 {
-			return 0, ErrCanonInt
-		}
+		// if s.byteval == 0 {
+		// 	return 0, ErrCanonInt
+		// }
 		s.kind = -1 // rearm Kind
 		return uint64(s.byteval), nil
 	case String:
